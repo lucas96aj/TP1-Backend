@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Básico</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #messages { list-style-type: none; padding: 0; }
+        #messages li { padding: 8px; margin-bottom: 2px; background-color: firebrick; display: flex; align-items: center; color: white }
+        #form { display: flex; }
+        #input { flex: 1; padding: 10px; }
+        #button { padding: 10px; }
+        #nameForm { margin-bottom: 10px; }
+        img { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div id="nameForm">
+        <label for="username">Nombre: </label>
+        <input id="username" autocomplete="off" placeholder="Ingrese su nombre"/><br>
+        <label for="avatarUrl">URL de la imagen (opcional): </label>
+        <input id="avatarUrl" autocomplete="off" placeholder="Ingrese su foto de perfil" /><br>
+        <button id="setNameButton">Ingresar</button>
+    </div>
+    <ul id="messages"></ul>
+    <form id="form" action="" style="display: none;">
+        <input id="input" autocomplete="off" />
+        <button id="button">Enviar</button>
+    </form>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const usernameInput = document.getElementById('username');
+        const avatarUrlInput = document.getElementById('avatarUrl');
+        const setNameButton = document.getElementById('setNameButton');
+        const nameForm = document.getElementById('nameForm');
+        const chatForm = document.getElementById('form');
+        const messageInput = document.getElementById('input');
+        const messages = document.getElementById('messages');
+
+        let username = '';
+        let avatarUrl = '';
+
+        setNameButton.addEventListener('click', () => {
+            username = usernameInput.value.trim();
+            avatarUrl = avatarUrlInput.value.trim();
+            if (username) {
+                nameForm.style.display = 'none';
+                chatForm.style.display = 'flex';
+            }
+        });
+
+        chatForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (messageInput.value) {
+                socket.emit('chat message', { user: username, avatarUrl: avatarUrl, message: messageInput.value });
+                messageInput.value = '';
+            }
+        });
+
+        socket.on('chat message', (data) => {
+            const item = document.createElement('li');
+
+            if (data.avatarUrl) {
+                const img = document.createElement('img');
+                img.src = data.avatarUrl;
+                img.alt = `${data.user} avatar`;
+                item.appendChild(img);
+            }
+
+            const messageText = document.createElement('span');
+            messageText.textContent = `${data.timestamp} - ${data.user}: ${data.message}`;
+            item.appendChild(messageText);
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+    </script>
+</body>
+</html>
